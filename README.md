@@ -1,32 +1,60 @@
-# AWS Security Baseline
+# AWS IAM Least-Privilege Lab
 
-A hardened AWS account baseline built with Terraform, following AWS security best practices
-and the CIS AWS Foundations Benchmark. This is the foundation for an automated threat
-detection and response pipeline (Project 2).
+A hands-on lab that designs, builds, and **proves** least-privilege access in AWS using Terraform.
+Each job role gets exactly the permissions it needs and nothing more, and automated tests
+check that every allowed action works and every forbidden one is denied.
+
+> **Least privilege:** give every identity the minimum access required to do its job.
+> A cashier gets a key to the register, not to the vault.
+
+## Scenario
+
+A fictional small company stores data in two S3 buckets:
+
+| Bucket | Contents | Sensitivity |
+|---|---|---|
+| `finance` | Financial reports | High |
+| `app-data` | Everyday application files | Normal |
+
+Three job roles need access:
+
+| Role | Allowed | Denied |
+|---|---|---|
+| **Auditor** | List and read all lab data | Any write or delete |
+| **Developer** | Read/write `app-data` | Any access to `finance`; any delete |
+| **Finance analyst** | Read `finance` | Everything else |
 
 ## Milestones
 
-- [ ] **0. Account setup (manual):** root MFA, IAM Identity Center admin user, CLI via SSO
-- [x] **1. Billing guardrail:** AWS Budgets alert at $5/month (`budget.tf`)
-- [ ] **2. Audit logging:** CloudTrail (all regions) to an encrypted, locked-down S3 bucket
-- [ ] **3. Configuration monitoring:** AWS Config recorder + CIS-aligned managed rules
-- [ ] **4. Threat detection:** GuardDuty enabled
-- [ ] **5. Account hardening:** IAM password policy, S3 Block Public Access (account-wide), EBS default encryption
-- [ ] **6. Verification:** Prowler scan before and after, with results documented
+- [x] **0. Setup:** Terraform project, short-lived CLI credentials via `aws login`, $5/month budget guardrail (`budget.tf`)
+- [ ] **1. Lab resources:** two S3 buckets (encrypted, public access blocked) with sample files
+- [ ] **2. Roles and policies:** Auditor, Developer, Finance analyst, each scoped to specific actions and resources
+- [ ] **3. Prove it:** automated tests assume each role and check an allow/deny matrix
+- [ ] **4. Break it:** deploy an over-permissive policy and demonstrate how it could be abused (privilege escalation)
+- [ ] **5. Fix it:** remediate, re-test, and document the findings
 
 ## Usage
 
 ```bash
 cp terraform.tfvars.example terraform.tfvars   # then edit it
-aws sso login --profile security-lab
+aws login --profile security-lab               # short-lived credentials, no access keys
 terraform init
-terraform plan
-terraform apply
+terraform plan                                  # preview changes
+terraform apply                                 # build
+terraform destroy                               # tear everything down
 ```
-
-To tear everything down: `terraform destroy`
 
 ## Security notes
 
-- No credentials are stored in this repo. Auth uses short-lived SSO credentials via a named CLI profile.
-- `*.tfstate` and `*.tfvars` are gitignored.
+- **No long-term credentials.** Auth uses temporary credentials from `aws login`; no access keys exist for this account.
+- **No secrets in Git.** `*.tfstate` and `*.tfvars` are gitignored; only a `.example` template is committed.
+- **Cost guardrail first.** The budget alarm was deployed before anything else.
+
+## Constraints
+
+This lab runs in an AWS **Free plan** account. Free plan accounts sit under an
+AWS-managed Organization whose Service Control Policies (SCPs) block services such as
+CloudTrail, GuardDuty, AWS Config, and IAM Access Analyzer. These were discovered by
+reading the `explicit deny in a service control policy` errors returned by the AWS CLI.
+The project focuses on IAM, which those SCPs allow, and does policy validation manually
+instead of with Access Analyzer.

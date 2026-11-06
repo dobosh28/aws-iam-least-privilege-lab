@@ -17,7 +17,7 @@ provider "aws" {
   # Tag everything this project creates so it's easy to find (and clean up).
   default_tags {
     tags = {
-      Project   = "aws-security-baseline"
+      Project   = "aws-iam-least-privilege-lab"
       ManagedBy = "terraform"
     }
   }

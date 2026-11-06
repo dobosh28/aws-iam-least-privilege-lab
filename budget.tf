@@ -1,4 +1,4 @@
-# Milestone 1: billing guardrail.
+# Milestone 0: billing guardrail.
 # Built first on purpose: it protects you from surprise charges while you experiment.
 # AWS Budgets: the first 2 budgets per account are free.
 

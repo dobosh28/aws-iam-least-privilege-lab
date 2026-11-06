@@ -1,0 +1,6 @@
+# Copy this file to terraform.tfvars and fill in your values.
+# terraform.tfvars is gitignored, so your real email stays out of GitHub.
+alert_email        = "you@example.com"
+aws_profile        = "security-lab"
+region             = "us-east-1"
+monthly_budget_usd = "5"

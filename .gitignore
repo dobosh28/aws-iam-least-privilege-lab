@@ -1,0 +1,14 @@
+# Terraform state can contain secrets and account details: never commit it
+*.tfstate
+*.tfstate.*
+.terraform/
+crash.log
+
+# Your real variable values (emails, account IDs). Commit the .example file instead.
+*.tfvars
+!*.tfvars.example
+
+# Never commit credentials
+.aws/
+*.pem
+.env

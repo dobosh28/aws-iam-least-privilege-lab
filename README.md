@@ -50,6 +50,16 @@ terraform destroy                               # tear everything down
 - **No secrets in Git.** `*.tfstate` and `*.tfvars` are gitignored; only a `.example` template is committed.
 - **Cost guardrail first.** The budget alarm was deployed before anything else.
 
+## How this was built
+
+I wrote the IAM roles and policies (`iam.tf`) and the S3 bucket definitions
+(`s3.tf`) myself in VS Code, and ran all Terraform plans, applies, and access
+tests myself.
+
+I used Claude (an AI assistant) as a tutor: it explained concepts, reviewed my
+code and pointed out bugs, scaffolded the initial project setup (provider
+config, variables, budget alarm), and handled Git commits.
+
 ## Constraints
 
 This lab runs in an AWS **Free plan** account. Free plan accounts sit under an

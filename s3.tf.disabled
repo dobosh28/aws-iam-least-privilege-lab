@@ -1,0 +1,9 @@
+# Two S3 buckets
+
+resource "aws_s3_bucket" "finance" {
+  bucket_prefix = "lab-finance-"
+}
+
+resource "aws_s3_bucket" "app_data" {
+  bucket_prefix = "lab-app-data-"
+}

@@ -27,7 +27,7 @@ Three job roles need access:
 ## Milestones
 
 - [x] **0. Setup:** Terraform project, short-lived CLI credentials via `aws login`, $5/month budget guardrail (`budget.tf`)
-- [ ] **1. Lab resources:** two S3 buckets (encrypted, public access blocked) with sample files
+- [ ] **1. Lab resources:** two S3 buckets (encrypted, public access blocked) with sample files. *Buckets deployed in us-east-2 (`s3.tf`); sample files still to do*
 - [x] **2. Roles and policies:** Auditor, Developer, Finance analyst, each scoped to specific actions and resources (`iam.tf`). Auditor tested live by assuming the role; S3 roles tested with `aws iam simulate-custom-policy` until the buckets can be created
 - [x] **3. Prove it:** `tests/check-roles.sh` runs 15 allow/deny checks across all three roles. For each check it fetches the role's live policy from AWS and evaluates it with `aws iam simulate-custom-policy`. Wrong answers are reported as FAIL, a missing AWS answer (for example, expired credentials) counts as a failure instead of a false PASS, and the script exits non-zero if anything fails
 - [ ] **4. Break it:** deploy an over-permissive policy and demonstrate how it could be abused (privilege escalation)
@@ -71,7 +71,9 @@ reading the `explicit deny in a service control policy` errors returned by the A
 The project focuses on IAM, which those SCPs allow, and does policy validation manually
 instead of with Access Analyzer.
 
-The SCPs also deny S3 object actions for every role, so `simulate-principal-policy`
-returns `explicitDeny` (`AllowedByOrganizations: false`) for all S3 checks. The tests use
-`simulate-custom-policy` on each role's live policy instead, which separates "is the role's
-policy correct?" from "is the organization blocking S3?"
+The SCPs also restrict regional services such as S3 to **us-east-2**, which is why the
+lab deploys there. This was first misread as a total S3 ban: `simulate-principal-policy`
+without a region returns `explicitDeny` for S3, and a test bucket created in us-east-2
+proved the real cause. The lesson is that simulator results depend on request context
+(`aws:RequestedRegion`). The tests use `simulate-custom-policy` on each role's live policy,
+which checks the role's own policy separately from organization-level rules.

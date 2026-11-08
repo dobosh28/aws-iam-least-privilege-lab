@@ -29,7 +29,7 @@ Three job roles need access:
 - [x] **0. Setup:** Terraform project, short-lived CLI credentials via `aws login`, $5/month budget guardrail (`budget.tf`)
 - [ ] **1. Lab resources:** two S3 buckets (encrypted, public access blocked) with sample files
 - [x] **2. Roles and policies:** Auditor, Developer, Finance analyst, each scoped to specific actions and resources (`iam.tf`). Auditor tested live by assuming the role; S3 roles tested with `aws iam simulate-custom-policy` until the buckets can be created
-- [ ] **3. Prove it:** automated tests assume each role and check an allow/deny matrix
+- [x] **3. Prove it:** `tests/check-roles.sh` runs 15 allow/deny checks across all three roles. For each check it fetches the role's live policy from AWS and evaluates it with `aws iam simulate-custom-policy`. Wrong answers are reported as FAIL, a missing AWS answer (for example, expired credentials) counts as a failure instead of a false PASS, and the script exits non-zero if anything fails
 - [ ] **4. Break it:** deploy an over-permissive policy and demonstrate how it could be abused (privilege escalation)
 - [ ] **5. Fix it:** remediate, re-test, and document the findings
 
@@ -42,6 +42,7 @@ terraform init
 terraform plan                                  # preview changes
 terraform apply                                 # build
 terraform destroy                               # tear everything down
+bash tests/check-roles.sh                       # run the allow/deny tests
 ```
 
 ## Security notes
@@ -54,7 +55,8 @@ terraform destroy                               # tear everything down
 
 I wrote the IAM roles and policies (`iam.tf`) and the S3 bucket definitions
 (`s3.tf`) myself in VS Code, and ran all Terraform plans, applies, and access
-tests myself.
+tests myself. I designed the test plan and wrote the test script (`tests/check-roles.sh`)
+step by step.
 
 I used Claude (an AI assistant) as a tutor: it explained concepts, reviewed my
 code and pointed out bugs, scaffolded the initial project setup (provider
@@ -68,3 +70,8 @@ CloudTrail, GuardDuty, AWS Config, and IAM Access Analyzer. These were discovere
 reading the `explicit deny in a service control policy` errors returned by the AWS CLI.
 The project focuses on IAM, which those SCPs allow, and does policy validation manually
 instead of with Access Analyzer.
+
+The SCPs also deny S3 object actions for every role, so `simulate-principal-policy`
+returns `explicitDeny` (`AllowedByOrganizations: false`) for all S3 checks. The tests use
+`simulate-custom-policy` on each role's live policy instead, which separates "is the role's
+policy correct?" from "is the organization blocking S3?"

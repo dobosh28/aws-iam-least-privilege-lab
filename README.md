@@ -27,7 +27,7 @@ Three job roles need access:
 ## Milestones
 
 - [x] **0. Setup:** Terraform project, short-lived CLI credentials via `aws login`, $5/month budget guardrail (`budget.tf`)
-- [ ] **1. Lab resources:** two S3 buckets (encrypted, public access blocked) with sample files. *Buckets deployed in us-east-2 (`s3.tf`); sample files still to do*
+- [x] **1. Lab resources:** two S3 buckets in us-east-2, each with AES256 encryption and all public access blocked, holding made-up sample files (`annual-report.csv` in finance, `config.json` in app-data), all in `s3.tf`
 - [x] **2. Roles and policies:** Auditor, Developer, Finance analyst, each scoped to specific actions and resources (`iam.tf`). Auditor tested live by assuming the role; S3 roles tested with `aws iam simulate-custom-policy` until the buckets can be created
 - [x] **3. Prove it:** `tests/check-roles.sh` runs 15 allow/deny checks across all three roles. For each check it fetches the role's live policy from AWS and evaluates it with `aws iam simulate-custom-policy`. Wrong answers are reported as FAIL, a missing AWS answer (for example, expired credentials) counts as a failure instead of a false PASS, and the script exits non-zero if anything fails
 - [ ] **4. Break it:** deploy an over-permissive policy and demonstrate how it could be abused (privilege escalation)

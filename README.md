@@ -31,7 +31,7 @@ Three job roles need access:
 - [x] **2. Roles and policies:** Auditor, Developer, Finance analyst, each scoped to specific actions and resources (`iam.tf`). Auditor tested live by assuming the role; S3 roles tested with `aws iam simulate-custom-policy` until the buckets can be created
 - [x] **3. Prove it:** `tests/check-roles.sh` runs 15 allow/deny checks across all three roles. For each check it fetches the role's live policy from AWS and evaluates it with `aws iam simulate-custom-policy`. Wrong answers are reported as FAIL, a missing AWS answer (for example, expired credentials) counts as a failure instead of a false PASS, and the script exits non-zero if anything fails
 - [x] **4. Break it:** deploy an over-permissive policy and demonstrate how it could be abused (privilege escalation) — see [Finding: Developer self-escalation](#finding-developer-self-escalation-via-iamputrolepolicy)
-- [ ] **5. Fix it:** remediate, re-test, and document the findings
+- [x] **5. Fix it:** delete the injected policy, remove `iam:PutRolePolicy` from `iam.tf`, re-apply; all 16 checks pass and the live finance read by `lab-developer` is `403` again
 
 ## Finding: Developer self-escalation via `iam:PutRolePolicy`
 
@@ -54,8 +54,9 @@ bug in the detector: it checked only the role's first inline policy (`PolicyName
 once the escalation added a second policy it missed the breach — a realistic false
 negative. The script now evaluates **all** of a role's inline policies.
 
-**Remediation (Milestone 5).** Delete the injected policy, remove `iam:PutRolePolicy` from
-`iam.tf`, re-apply, and confirm the tests pass.
+**Remediation (Milestone 5).** Deleted the injected policy, removed `iam:PutRolePolicy`
+from `iam.tf`, and re-applied. Verified: all 16 checks pass, and the finance read that the
+escalation had enabled is `403 Forbidden` again when attempted live as `lab-developer`.
 
 ## Usage
 

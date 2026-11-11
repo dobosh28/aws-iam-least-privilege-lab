@@ -58,6 +58,15 @@ negative. The script now evaluates **all** of a role's inline policies.
 from `iam.tf`, and re-applied. Verified: all 16 checks pass, and the finance read that the
 escalation had enabled is `403 Forbidden` again when attempted live as `lab-developer`.
 
+**Why generic tooling missed it.** I also ran AWS IAM Access Analyzer's policy validation
+(`aws accessanalyzer validate-policy`) against all three roles, and against the
+over-permissive Developer policy — every run returned zero findings. `iam:PutRolePolicy`
+scoped to the role's own ARN is syntactically valid and not a wildcard, so a generic
+linter sees nothing wrong. The escalation is only visible to a test that encodes the
+*intent* of the role ("a Developer must never be able to edit IAM"), which is exactly what
+`check-roles.sh` asserts. Automated best-practice scanning and intent-specific tests are
+complementary, not interchangeable.
+
 ## Usage
 
 ```bash

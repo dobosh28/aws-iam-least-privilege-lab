@@ -9,11 +9,20 @@ check() {
   local RESOURCE="$3"
   local EXPECTED="$4"
 
-  local POLICY_NAME=$(aws iam list-role-policies --profile security-lab --role-name "$ROLE" --query 'PolicyNames[0]' --output text)
-  local POLICY=$(aws iam get-role-policy --profile security-lab --role-name "$ROLE" --policy-name "$POLICY_NAME" --query PolicyDocument --output json)
+  #local POLICY_NAME=$(aws iam list-role-policies --profile security-lab --role-name "$ROLE" --query 'PolicyNames' --output text)
+  #local POLICY=$(aws iam get-role-policy --profile security-lab --role-name "$ROLE" --policy-name "$POLICY_NAME" --query PolicyDocument --output json)
+
+  local NAMES=$(aws iam list-role-policies --profile security-lab --role-name "$ROLE" --query 'PolicyNames' --output text)
+
+  local DOCS=()
+  local POLICY_NAME
+  for POLICY_NAME in $NAMES; do
+    local DOC=$(aws iam get-role-policy --profile security-lab --role-name "$ROLE" --policy-name "$POLICY_NAME" --query PolicyDocument --output json)
+    DOCS+=("$DOC")
+  done
 
   DECISION=$(aws iam simulate-custom-policy --profile security-lab \
-    --policy-input-list "$POLICY" \
+    --policy-input-list "${DOCS[@]}" \
     --action-names "$ACTION" \
     --resource-arns "$RESOURCE" \
     --query 'EvaluationResults[0].EvalDecision' --output text)
@@ -50,6 +59,7 @@ check lab-developer       s3:DeleteObject arn:aws:s3:::lab-app-data-test/file.tx
 check lab-developer       s3:GetObject    arn:aws:s3:::lab-finance-test/file.txt     DENIED
 check lab-developer       s3:CreateBucket arn:aws:s3:::lab-finance-test              DENIED
 check lab-developer       iam:ListRoles   "*"                                        DENIED
+check lab-developer       iam:PutRolePolicy arn:aws:iam::060692821468:role/lab-developer  DENIED
 
 check lab-finance-analyst s3:ListBucket   arn:aws:s3:::lab-finance-test              ALLOWED
 check lab-finance-analyst s3:GetObject    arn:aws:s3:::lab-finance-test/file.txt     ALLOWED

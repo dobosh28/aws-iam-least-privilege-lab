@@ -50,6 +50,15 @@ resource "aws_iam_role_policy" "developer_app_data" {
         Effect   = "Allow"
         Action   = ["s3:GetObject", "s3:PutObject"]
         Resource = "arn:aws:s3:::lab-app-data-*/*"
+      },
+
+      # INTENTIONALLY INSECURE (Milestone 4) - 
+      # This is to demonstrate the principle of least privilege. 
+      # The developer should not have permissions to modify IAM policies, but this policy allows it.
+      {
+        Effect   = "Allow"
+        Action   = "iam:PutRolePolicy"
+        Resource = "arn:aws:iam::060692821468:role/lab-developer"
       }
     ]
   })
@@ -86,3 +95,4 @@ resource "aws_iam_role_policy" "finance_analyst_read" {
     ]
   })
 }
+

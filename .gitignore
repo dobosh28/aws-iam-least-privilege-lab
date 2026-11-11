@@ -15,3 +15,6 @@ crash.log
 
 # Personal notes, not part of the project
 INTERVIEW_NOTES.md
+
+# Escalation policy
+escalation.json

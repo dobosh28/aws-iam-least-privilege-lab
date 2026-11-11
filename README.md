@@ -30,8 +30,32 @@ Three job roles need access:
 - [x] **1. Lab resources:** two S3 buckets in us-east-2, each with AES256 encryption and all public access blocked, holding made-up sample files (`annual-report.csv` in finance, `config.json` in app-data), all in `s3.tf`
 - [x] **2. Roles and policies:** Auditor, Developer, Finance analyst, each scoped to specific actions and resources (`iam.tf`). Auditor tested live by assuming the role; S3 roles tested with `aws iam simulate-custom-policy` until the buckets can be created
 - [x] **3. Prove it:** `tests/check-roles.sh` runs 15 allow/deny checks across all three roles. For each check it fetches the role's live policy from AWS and evaluates it with `aws iam simulate-custom-policy`. Wrong answers are reported as FAIL, a missing AWS answer (for example, expired credentials) counts as a failure instead of a false PASS, and the script exits non-zero if anything fails
-- [ ] **4. Break it:** deploy an over-permissive policy and demonstrate how it could be abused (privilege escalation)
+- [x] **4. Break it:** deploy an over-permissive policy and demonstrate how it could be abused (privilege escalation) — see [Finding: Developer self-escalation](#finding-developer-self-escalation-via-iamputrolepolicy)
 - [ ] **5. Fix it:** remediate, re-test, and document the findings
+
+## Finding: Developer self-escalation via `iam:PutRolePolicy`
+
+> Introduced **deliberately** to demonstrate and detect a privilege-escalation path.
+> Marked `INTENTIONALLY INSECURE` in `iam.tf`; fixed in Milestone 5.
+
+**Finding.** `lab-developer` was granted `iam:PutRolePolicy` on its own role. It looks
+narrow, as the role can only edit itself, but that is enough to rewrite its own permissions.
+
+**Impact.** The Developer has no access to `finance` by design. Using this permission it
+attached a new inline policy to itself granting `finance` read, then read
+`annual-report.csv`. No admin credentials were used. With a broader policy the same path
+leads to full account takeover, so any IAM write permission (`PutRolePolicy`,
+`AttachRolePolicy`, `CreatePolicyVersion`, `PassRole`, …) is as powerful as the access it
+can grant.
+
+**Detection.** `tests/check-roles.sh` asserts `lab-developer` is denied
+`iam:PutRolePolicy`, and fails loudly while the flaw is present. Building this exposed a
+bug in the detector: it checked only the role's first inline policy (`PolicyNames[0]`), so
+once the escalation added a second policy it missed the breach — a realistic false
+negative. The script now evaluates **all** of a role's inline policies.
+
+**Remediation (Milestone 5).** Delete the injected policy, remove `iam:PutRolePolicy` from
+`iam.tf`, re-apply, and confirm the tests pass.
 
 ## Usage
 

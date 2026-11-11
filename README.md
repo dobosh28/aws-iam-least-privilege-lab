@@ -58,6 +58,30 @@ negative. The script now evaluates **all** of a role's inline policies.
 from `iam.tf`, and re-applied. Verified: all 16 checks pass, and the finance read that the
 escalation had enabled is `403 Forbidden` again when attempted live as `lab-developer`.
 
+## Screenshots
+
+Evidence from the AWS Console that the lab is deployed as described. Account IDs are
+redacted where they appeared.
+
+**Cost guardrail — a `$5` monthly budget, created before any resources were built:**
+
+![Monthly budget guardrail, $5.00, status OK](docs/images/budget.png)
+
+**The `finance` bucket is encrypted at rest (SSE-S3 / AES-256) and blocks all public access:**
+
+![finance bucket default encryption: SSE-S3](docs/images/bucket-encryption.png)
+
+![finance bucket: Block all public access is On](docs/images/bucket-public-access-block.png)
+
+**The Developer role is scoped to the `app-data` bucket only — no `finance`, no IAM writes
+(shown in its remediated state, after the Milestone 5 fix):**
+
+![lab-developer inline policy: S3 access limited to lab-app-data](docs/images/developer-policy.png)
+
+**The Developer role's trust policy — only this account can assume it:**
+
+![lab-developer trust relationship: account root with sts:AssumeRole](docs/images/developer-trust.png)
+
 ## Usage
 
 ```bash
